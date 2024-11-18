@@ -119,6 +119,7 @@ func DefaultEnvoyGatewayLogging() *EnvoyGatewayLogging {
 		Level: map[EnvoyGatewayLogComponent]LogLevel{
 			LogComponentGatewayDefault: LogLevelInfo,
 		},
+		JSON: false,
 	}
 }
 

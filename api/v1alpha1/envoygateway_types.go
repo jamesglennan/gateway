@@ -120,6 +120,9 @@ type EnvoyGatewayLogging struct {
 	//
 	// +kubebuilder:default={default: info}
 	Level map[EnvoyGatewayLogComponent]LogLevel `json:"level,omitempty"`
+	//JSON when set to true will encode logs into json output, otherwise when false it will output as text. Defaults to false
+	// +kubebuilder:default={default: false}
+	JSON bool `json:"bool,omitempty"`
 }
 
 // EnvoyGatewayLogComponent defines a component that supports a configured logging level.

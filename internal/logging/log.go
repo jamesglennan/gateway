@@ -24,7 +24,7 @@ type Logger struct {
 }
 
 func NewLogger(logging *egv1a1.EnvoyGatewayLogging) Logger {
-	logger := initZapLogger(os.Stdout, logging, logging.Level[egv1a1.LogComponentGatewayDefault])
+	logger := initZapLogger(os.Stdout, logging, logging.Level[egv1a1.LogComponentGatewayDefault], logging.JSON)
 
 	return Logger{
 		Logger:        zapr.NewLogger(logger),
@@ -40,7 +40,7 @@ func FileLogger(file string, name string, level egv1a1.LogLevel) Logger {
 	}
 
 	logging := egv1a1.DefaultEnvoyGatewayLogging()
-	logger := initZapLogger(writer, logging, level)
+	logger := initZapLogger(writer, logging, level, logging.JSON)
 
 	return Logger{
 		Logger:        zapr.NewLogger(logger).WithName(name),
@@ -51,7 +51,7 @@ func FileLogger(file string, name string, level egv1a1.LogLevel) Logger {
 
 func DefaultLogger(level egv1a1.LogLevel) Logger {
 	logging := egv1a1.DefaultEnvoyGatewayLogging()
-	logger := initZapLogger(os.Stdout, logging, level)
+	logger := initZapLogger(os.Stdout, logging, level, logging.JSON)
 
 	return Logger{
 		Logger:        zapr.NewLogger(logger),
@@ -67,7 +67,7 @@ func DefaultLogger(level egv1a1.LogLevel) Logger {
 // more information).
 func (l Logger) WithName(name string) Logger {
 	logLevel := l.logging.Level[egv1a1.EnvoyGatewayLogComponent(name)]
-	logger := initZapLogger(os.Stdout, l.logging, logLevel)
+	logger := initZapLogger(os.Stdout, l.logging, logLevel, l.logging.JSON)
 
 	return Logger{
 		Logger:        zapr.NewLogger(logger).WithName(name),
@@ -105,9 +105,17 @@ func (l Logger) Sugar() *zap.SugaredLogger {
 	return l.sugaredLogger
 }
 
-func initZapLogger(w io.Writer, logging *egv1a1.EnvoyGatewayLogging, level egv1a1.LogLevel) *zap.Logger {
+func initZapLogger(w io.Writer, logging *egv1a1.EnvoyGatewayLogging, level egv1a1.LogLevel, json bool) *zap.Logger {
 	parseLevel, _ := zapcore.ParseLevel(string(logging.DefaultEnvoyGatewayLoggingLevel(level)))
-	core := zapcore.NewCore(zapcore.NewConsoleEncoder(zap.NewDevelopmentEncoderConfig()), zapcore.AddSync(w), zap.NewAtomicLevelAt(parseLevel))
+	var encoder zapcore.Encoder
+
+	if json {
+		encoder = zapcore.NewJSONEncoder(zap.NewDevelopmentEncoderConfig())
+	} else {
+		encoder = zapcore.NewConsoleEncoder(zap.NewDevelopmentEncoderConfig())
+	}
+
+	core := zapcore.NewCore(encoder, zapcore.AddSync(w), zap.NewAtomicLevelAt(parseLevel))
 
 	return zap.New(core, zap.AddCaller())
 }
